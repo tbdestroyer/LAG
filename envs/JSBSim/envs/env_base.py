@@ -224,16 +224,17 @@ class BaseEnv(gymnasium.Env):
             data = [f"#{timestamp:.2f}\n"]
             for sim in self._jsbsims.values():
                 log_msg = sim.log()
+                print(f"sim.log() output: {log_msg}")
                 if log_msg is not None:
                     data.append(log_msg + "\n")
-        
             for sim in self._tempsims.values():
                 log_msg = sim.log()
+                print(f"sim.log() output (temp): {log_msg}")
                 if log_msg is not None:
                     data.append(log_msg + "\n")
 
             data_str = "".join(data)
-            # send data to tacview
+            print("Sending to Tacview:", data_str)
             tacview.send_data_to_client(data_str)
         else:
             raise NotImplementedError

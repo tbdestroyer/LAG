@@ -26,19 +26,19 @@ def _t2n(x):
 
 num_agents = 4
 render = True
-ego_policy_index = 1040
-enm_policy_index = 0
+ego_policy_index = 1000
+enm_policy_index = 1000
 episode_rewards = 0
-ego_run_dir = "/home/lqh/jyh/CloseAirCombat/scripts/results/MultipleCombat/2v2/NoWeapon/HierarchySelfplay/mappo/artillery_check/wandb/latest-run/files"
-enm_run_dir = "/home/lqh/jyh/CloseAirCombat/scripts/results/MultipleCombat/2v2/NoWeapon/HierarchySelfplay/mappo/artillery_check/wandb/latest-run/files"
+ego_run_dir = "results/MultipleCombat/2v2/NoWeapon/HierarchySelfplay/mappo/2v2_no_weapon/run1"
+enm_run_dir = "results/MultipleCombat/2v2/NoWeapon/HierarchySelfplay/mappo/2v2_no_weapon/run1"
 experiment_name = ego_run_dir.split('/')[-4]
 
 env = MultipleCombatEnv("2v2/NoWeapon/HierarchySelfplay")
 env.seed(0)
 args = Args()
 
-ego_policy = PPOActor(args, env.observation_space, env.action_space, device=torch.device("cuda"))
-enm_policy = PPOActor(args, env.observation_space, env.action_space, device=torch.device("cuda"))
+ego_policy = PPOActor(args, env.observation_space, env.action_space, device=torch.device("cpu"))
+enm_policy = PPOActor(args, env.observation_space, env.action_space, device=torch.device("cpu"))
 ego_policy.eval()
 enm_policy.eval()
 ego_policy.load_state_dict(torch.load(ego_run_dir + f"/actor_{ego_policy_index}.pt"))

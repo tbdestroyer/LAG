@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from runner.tacview import Tacview
 from envs.JSBSim.envs import SingleCombatEnv, SingleControlEnv, MultipleCombatEnv
 from envs.env_wrappers import SubprocVecEnv, DummyVecEnv
 from envs.JSBSim.core.catalog import Catalog as c
@@ -25,19 +26,19 @@ def _t2n(x):
 
 num_agents = 2
 render = True
-ego_policy_index = 1040
-enm_policy_index = 0
+ego_policy_index = 1000
+enm_policy_index = 1000
 episode_rewards = 0
-ego_run_dir = "/home/lqh/jyh/CloseAirCombat/scripts/results/SingleCombat/1v1/NoWeapon/HierarchySelfplay/ppo/artillery_check/wandb/latest-run/files"
-enm_run_dir = "/home/lqh/jyh/CloseAirCombat/scripts/results/SingleCombat/1v1/NoWeapon/HierarchySelfplay/ppo/artillery_check/wandb/latest-run/files"
+ego_run_dir = "results/SingleCombat/1v1/NoWeapon/Selfplay/ppo/1v1_no_weapon/run1"
+enm_run_dir = "results/SingleCombat/1v1/NoWeapon/Selfplay/ppo/1v1_no_weapon/run1"
 experiment_name = ego_run_dir.split('/')[-4]
 
 env = SingleCombatEnv("1v1/NoWeapon/Selfplay")
 env.seed(0)
 args = Args()
 
-ego_policy = PPOActor(args, env.observation_space, env.action_space, device=torch.device("cuda"))
-enm_policy = PPOActor(args, env.observation_space, env.action_space, device=torch.device("cuda"))
+ego_policy = PPOActor(args, env.observation_space, env.action_space, device=torch.device("cpu"))
+enm_policy = PPOActor(args, env.observation_space, env.action_space, device=torch.device("cpu"))
 ego_policy.eval()
 enm_policy.eval()
 ego_policy.load_state_dict(torch.load(ego_run_dir + f"/actor_{ego_policy_index}.pt"))
@@ -46,8 +47,9 @@ enm_policy.load_state_dict(torch.load(enm_run_dir + f"/actor_{enm_policy_index}.
 
 print("Start render")
 obs = env.reset()
+tacview = Tacview()
 if render:
-    env.render(mode='txt', filepath=f'{experiment_name}.txt.acmi')
+    env.render(mode='real_time', tacview=tacview)
 ego_rnn_states = np.zeros((1, 1, 128), dtype=np.float32)
 masks = np.ones((num_agents // 2, 1))
 enm_obs =  obs[num_agents // 2:, :]
@@ -66,7 +68,7 @@ while True:
     rewards = rewards[:num_agents // 2, ...]
     episode_rewards += rewards
     if render:
-        env.render(mode='txt', filepath=f'{experiment_name}.txt.acmi')
+        env.render(mode='real_time',tacview=tacview)
     if dones.all():
         print(infos)
         break

@@ -164,6 +164,7 @@ class AircraftSimulator(BaseSimulator):
         # load JSBSim FDM
         self.jsbsim_exec = jsbsim.FGFDMExec(os.path.join(get_root_dir(), 'data'))
         self.jsbsim_exec.set_debug_level(0)
+        self.jsbsim_exec.set_output_directive("output/tacview_output.xml")
         self.jsbsim_exec.load_model(self.model)
         Catalog.add_jsbsim_props(self.jsbsim_exec.query_property_catalog(""))
         self.jsbsim_exec.set_dt(self.dt)

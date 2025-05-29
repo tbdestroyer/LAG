@@ -552,7 +552,11 @@ class MixedCatalog(dict):
         for jsbsim_prop in jsbsim_props:
             if jsbsim_prop.strip() == "":
                 continue  # skip empty line
-            [name_jsbsim, access] = jsbsim_prop.split(" ")
+            parts = jsbsim_prop.strip().split(" ")
+            if len(parts) != 2:
+                continue  # skip malformed lines
+            name_jsbsim, access = parts
+
             access = re.sub(r"[\(\)]", "", access)  # remove parenthesis from the flag
             name = re.sub(r"_$", "", re.sub(r"[\-/\]\[]+", "_", name_jsbsim))  # get property name from jsbsim name
             if name not in self:

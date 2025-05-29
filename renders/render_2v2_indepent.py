@@ -49,8 +49,8 @@ env = MultipleCombatEnv("2v2/NoWeapon/HierarchySelfplay")
 env.seed(0)
 args = Args()
 
-ego_policy = PPOActor(args, env.observation_space, env.action_space, device=torch.device("cuda"))
-enm_policy = PPOActor(args, spaces.Box(low=-10, high=10., shape=(15,)), env.action_space, device=torch.device("cuda"))
+ego_policy = PPOActor(args, env.observation_space, env.action_space, device=torch.device("cpu"))
+enm_policy = PPOActor(args, spaces.Box(low=-10, high=10., shape=(15,)), env.action_space, device=torch.device("cpu"))
 ego_policy.eval()
 enm_policy.eval()
 ego_policy.load_state_dict(torch.load(ego_run_dir + f"/actor_{ego_policy_index}.pt"))
@@ -60,7 +60,7 @@ enm_policy.load_state_dict(torch.load(enm_run_dir + f"/actor_{enm_policy_index}.
 print("Start render")
 obs, _ = env.reset()
 if render:
-    env.render(mode='txt', filepath=f'{experiment_name}.txt.acmi')
+    env.render(mode='real_time', tacview=tacview)
 ego_rnn_states = np.zeros((1, 1, 128), dtype=np.float32)
 masks = np.ones((num_agents // 2, 1))
 enm_obs =  obs[num_agents // 2:, :]
@@ -87,7 +87,7 @@ while True:
     rewards = rewards[:num_agents // 2, ...]
     episode_rewards += rewards
     if render:
-        env.render(mode='txt', filepath=f'{experiment_name}.txt.acmi')
+        env.render(mode='real_time', tacview=tacview)
     if dones.all():
         print(infos)
         break

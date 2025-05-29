@@ -140,3 +140,48 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Additional entries for our project
+# Training outputs
+wandb/
+*.pt
+*.pth
+*.ckpt
+*.bin
+
+# JSBSim specific
+*.csv
+*.dat
+*.out
+*.xml
+*.acmi
+*.txt.acmi
+
+# Temporary files
+*.swp
+*.swo
+*~
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+logs/
+tensorboard/
+runs/
+
+# Model checkpoints
+checkpoints/
+saved_models/
+
+# Data files
+data/
+datasets/
+raw_data/
+
+# Configuration files with sensitive information
+config.local.yaml
+*.local.yaml
+*.local.json
