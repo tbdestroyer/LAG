@@ -12,6 +12,11 @@ acceleration_limit_x: 10.0
 acceleration_limit_y: 10.0
 acceleration_limit_z: 10.0
 
+# terrain config
+terrain_file: "terrain/terrain.xml"
+terrain_enabled: true
+terrain_scale: 1.0
+
 # aircraft config
 aircraft_configs: {
   A0100: {
@@ -50,6 +55,11 @@ PostureReward_target_dist: 3.0
 AltitudeReward_safe_altitude: 4.0
 AltitudeReward_danger_altitude: 3.5
 AltitudeReward_Kv: 0.2
+
+# Add terrain-aware rewards
+TerrainReward_scale: 50.0
+TerrainReward_advantage_height: 1000.0  # meters
+TerrainReward_mask_distance: 5000.0     # meters
 
 EventDrivenReward_scale: 1
 EventDrivenReward_potential: true
