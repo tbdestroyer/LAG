@@ -224,12 +224,12 @@ class BaseEnv(gymnasium.Env):
             data = [f"#{timestamp:.2f}\n"]
             for sim in self._jsbsims.values():
                 log_msg = sim.log()
-                print(f"sim.log() output: {log_msg}")
+                #print(f"sim.log() output: {log_msg}")
                 if log_msg is not None:
                     data.append(log_msg + "\n")
             for sim in self._tempsims.values():
                 log_msg = sim.log()
-                print(f"sim.log() output (temp): {log_msg}")
+                #print(f"sim.log() output (temp): {log_msg}")
                 if log_msg is not None:
                     data.append(log_msg + "\n")
 
