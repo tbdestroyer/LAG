@@ -23,7 +23,21 @@ class Args:
         self.tpdv = dict(dtype=torch.float32, device=torch.device('cpu'))
         self.use_prior = True
 
-
+def model_forward(ego_obs):
+    batch_size = ego_obs.shape[0]
+    #obs: input tensor from Captum (shape should match ego_obs)
+    # Use the latest ego_rnn_states and masks from the main loop
+    rnn_states = torch.tensor(ego_rnn_states, dtype=torch.float32)
+    masks_ = torch.tensor(masks, dtype=torch.float32)
+    if rnn_states.shape[0] != batch_size:
+        rnn_states = rnn_states.expand(batch_size, *rnn_states.shape[1:]).contiguous()
+    if masks_.shape[0] != batch_size:
+        masks_ = masks_.expand(batch_size, *masks_.shape[1:]).contiguous()
+        ego_policy.to(ego_obs.device)
+    # Get the action logits or probabilities from the policy
+    _, action_log_probs, _ = ego_policy(ego_obs, rnn_states, masks_, deterministic=True)
+    # Return the output you want to attribute (e.g., actions)
+    return action_log_probs
 
     
     
@@ -32,22 +46,7 @@ def _t2n(x):
 
 
 
-def test_plane(model_path, number_of_episodes, algorithm):
-    def model_forward(ego_obs):
-        batch_size = ego_obs.shape[0]
-        #obs: input tensor from Captum (shape should match ego_obs)
-        # Use the latest ego_rnn_states and masks from the main loop
-        rnn_states = torch.tensor(ego_rnn_states, dtype=torch.float32)
-        masks_ = torch.tensor(masks, dtype=torch.float32)
-        if rnn_states.shape[0] != batch_size:
-            rnn_states = rnn_states.expand(batch_size, *rnn_states.shape[1:]).contiguous()
-        if masks_.shape[0] != batch_size:
-            masks_ = masks_.expand(batch_size, *masks_.shape[1:]).contiguous()
-            ego_policy.to(ego_obs.device)
-        # Get the action logits or probabilities from the policy
-        _, action_log_probs, _ = ego_policy(ego_obs, rnn_states, masks_, deterministic=True)
-        # Return the output you want to attribute (e.g., actions)
-        return action_log_probs
+def train_plane(model_path, number_of_episodes, algorithm):
     D = []
     feature_labels = [
     "ego_altitude (5km)", "ego_roll_sin", "ego_roll_cos", "ego_pitch_sin", "ego_pitch_cos",
@@ -111,7 +110,6 @@ def test_plane(model_path, number_of_episodes, algorithm):
     enm_obs =  obs[num_agents // 2:, :]
     ego_obs =  obs[:num_agents // 2, :]
     enm_rnn_states = np.zeros_like(ego_rnn_states, dtype=np.float32)
-    D = [{'states': [], 'actions': [], 'entropy': [], 'dones': [], 'rewards': []}]
     while True:
         #Store current state before action
         prev_ego_obs = ego_obs.copy()
@@ -137,24 +135,15 @@ def test_plane(model_path, number_of_episodes, algorithm):
         rewards = rewards[:num_agents // 2, ...]
         episode_rewards += rewards
         bloods = [env.agents[agent_id].bloods for agent_id in env.agents.keys()]
-        next_ego_obs = obs[:num_agents // 2, :]
         if render:
             env.render(mode='real_time',tacview=tacview)
         if dones.all():
             print(infos)
             print(bloods)
-            D[0]["states"].append(prev_ego_obs)
-            D[0]["actions"].append(ego_actions)
-            D[0]["entropy"].append(entropy)
-            D[0]["dones"].append(True)
-            D[0]["rewards"].append(rewards[0])
             break
         
-        D[0]["states"].append(prev_ego_obs)
-        D[0]["actions"].append(ego_actions)
-        D[0]["entropy"].append(entropy)
-        D[0]["dones"].append(False)
-        D[0]["rewards"].append(rewards[0])
+        next_ego_obs = obs[:num_agents // 2, :]
+        D.append((prev_ego_obs, ego_actions,value, entropy, next_ego_obs))
         
         #----------------Integrated Gradients----------------
         input = torch.tensor(ego_obs, dtype=torch.float32, device=torch.device("cpu"), requires_grad=True)
