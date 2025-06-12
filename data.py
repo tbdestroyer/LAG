@@ -64,7 +64,7 @@ class Data:
         self.states_and_values = np.concatenate([self.states, np.expand_dims(self.values, axis=1)], axis=1)
         print("The size of states_and_values is ", self.states_and_values.shape)
         print("The size of actions is ", self.actions.shape)
-        self.states_values_actions = np.concatenate([self.states_and_values, np.expand_dims(self.actions, axis=1)], axis=1)
+        self.states_values_actions = np.concatenate([self.states_and_values, self.actions], axis=1)
         self.cluster_input = np.concatenate([self.states_values_actions, np.expand_dims(self.ids, axis=1)], axis=1)
         self.data_bounds = self.get_bounds()
 
@@ -134,7 +134,7 @@ class Data:
         states = np.reshape(s, [-1, num_feats])
         self.num_entries = len(states)
         next_states = np.reshape(ns, [self.num_entries, num_feats])
-        actions = np.reshape(a, [-1])
+        actions = np.array(a).reshape(-1,np.array(a[0]).shape[-1])
         entropy = np.reshape(e, [-1])
         done = np.reshape(d, [-1])
         reward = np.reshape(r, [-1])

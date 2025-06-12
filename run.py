@@ -41,7 +41,7 @@ if __name__ == '__main__':
     
     if args.env == "plane":
         pass
-        data, model, num_feats, num_actions, values = test_plane(None, None, None)
+        data, model, num_feats, num_actions, values,feature_labels = test_plane(None, None, None)
         # if args.calc_fidelity
         #     fidelity_fn = calculate_fidelity_plane
         def load_critic():
@@ -101,9 +101,25 @@ if __name__ == '__main__':
         print("Entropy: ", len(data[0]["entropy"]), data[0]["entropy"][0].shape)
         # print("Actions: ")
         # print(data[0]["actions"])
-
+        def print_shapes(tag, lst):
+            print(f"{tag}: {len(lst)}")
+            for i, x in enumerate(lst[:5]):
+                print(f"  [{i}] shape: {np.array(x).shape}")
+        for i in range(len(data[0]["states"])):
+            data[0]["states"][i] = np.array(data[0]["states"][i]).reshape(-1)
+            data[0]["next_states"][i] = np.array(data[0]["next_states"][i]).reshape(-1)
+            data[0]["actions"][i] = np.array(data[0]["actions"][i]).reshape(-1)
+            data[0]["entropy"][i] = np.array(data[0]["entropy"][i]).reshape(())  # scalar
+            data[0]["rewards"][i] = np.array(data[0]["rewards"][i]).reshape(())  # scalar
+            data[0]["dones"][i] = np.array(data[0]["dones"][i]).reshape(())      # scalar
+        print_shapes("states", data[0]["states"])
+        print_shapes("next_states", data[0]["next_states"])
+        print_shapes("actions", data[0]["actions"])
+        print_shapes("entropy", data[0]["entropy"])
+        print_shapes("dones", data[0]["dones"])
+        print_shapes("rewards", data[0]["rewards"])
         dataset = Data(data, value_fn)
-        translator = PlanePredicates(num_feats=model.feature_labels.len())
+        translator = PlanePredicates(num_feats=len(feature_labels))
         '''
     elif args.env == 'mountain':
         data, model, num_feats, num_actions = test_mountain(model_path, args.num_episodes, mode=args.alg)
