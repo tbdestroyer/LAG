@@ -98,24 +98,26 @@ def test_plane(model_path, number_of_episodes, algorithm):
     ego_policy.eval()
     enm_policy.eval()
     ego_policy.load_state_dict(torch.load(ego_run_dir + f"/actor_520.pt"))
-    enm_policy.load_state_dict(torch.load(enm_run_dir + f"/actor_1040.pt"))
+    enm_policy.load_state_dict(torch.load(enm_run_dir + f"/actor_520.pt"))
 
 
     print("Start render")
     obs = env.reset()
     tacview = Tacview()
     if render:
-        env.render(mode="real_time", tacview=tacview)
+        env.render(mode="txt", tacview=tacview)
     ego_rnn_states = np.zeros((1, 1, 128), dtype=np.float32)
     masks = np.ones((num_agents // 2, 1))
     enm_obs =  obs[num_agents // 2:, :]
     ego_obs =  obs[:num_agents // 2, :]
     enm_rnn_states = np.zeros_like(ego_rnn_states, dtype=np.float32)
-    D = [{'states': [], 'actions': [], 'entropy': [], 'dones': [], 'rewards': []}]
+    D = [{'states': [], 'actions': [], 'entropy': [], 'dones': [], 'rewards': [], 'next_states': []}]
+    values = []
     while True:
         #Store current state before action
         prev_ego_obs = ego_obs.copy()
         
+        # value is action_log_probs from PPOActor.forward()
         ego_actions, value, ego_rnn_states = ego_policy(ego_obs, ego_rnn_states, masks, deterministic=True)
         ego_actions = _t2n(ego_actions)
         value = _t2n(value)
@@ -138,16 +140,24 @@ def test_plane(model_path, number_of_episodes, algorithm):
         episode_rewards += rewards
         bloods = [env.agents[agent_id].bloods for agent_id in env.agents.keys()]
         next_ego_obs = obs[:num_agents // 2, :]
+
         if render:
-            env.render(mode='real_time',tacview=tacview)
+            env.render(mode='txt',tacview=tacview)
         if dones.all():
             print(infos)
             print(bloods)
-            D[0]["states"].append(prev_ego_obs)
+            D[0]["states"].append(prev_ego_obs[0].reshape(-1))
             D[0]["actions"].append(ego_actions)
             D[0]["entropy"].append(entropy)
             D[0]["dones"].append(True)
-            D[0]["rewards"].append(rewards[0])
+            D[0]["rewards"].append(rewards)
+            D[0]["next_states"].append(next_ego_obs[0].reshape(-1))
+            print("Collected data lengths:")
+            
+            print("States:", len(D[0]["states"]))
+            print("Actions:", len(D[0]["actions"]))
+            print("Entropies:", len(D[0]["entropy"]))
+            print("Rewards:", len(D[0]["rewards"]))
             break
         
         D[0]["states"].append(prev_ego_obs)
@@ -155,6 +165,7 @@ def test_plane(model_path, number_of_episodes, algorithm):
         D[0]["entropy"].append(entropy)
         D[0]["dones"].append(False)
         D[0]["rewards"].append(rewards[0])
+        values.append(value)
         
         #----------------Integrated Gradients----------------
         input = torch.tensor(ego_obs, dtype=torch.float32, device=torch.device("cpu"), requires_grad=True)
@@ -181,4 +192,4 @@ def test_plane(model_path, number_of_episodes, algorithm):
     print(episode_rewards)
     print(bloods)
 
-    return D, ego_policy, len(feature_labels), 4
+    return D, ego_policy, len(feature_labels), 4, values

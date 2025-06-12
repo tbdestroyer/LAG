@@ -60,7 +60,10 @@ class Data:
         self.num_feats, self.states, self.actions, self.next_states, self.entropies, self.dones, self.values, self.rewards = self.parse_data()
         self.ids = np.arange(self.num_entries)
         
+        print("The size of states is ", self.states.shape, "and the size of values is ", self.values.shape)
         self.states_and_values = np.concatenate([self.states, np.expand_dims(self.values, axis=1)], axis=1)
+        print("The size of states_and_values is ", self.states_and_values.shape)
+        print("The size of actions is ", self.actions.shape)
         self.states_values_actions = np.concatenate([self.states_and_values, np.expand_dims(self.actions, axis=1)], axis=1)
         self.cluster_input = np.concatenate([self.states_values_actions, np.expand_dims(self.ids, axis=1)], axis=1)
         self.data_bounds = self.get_bounds()
