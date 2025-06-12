@@ -95,6 +95,7 @@ class ACTLayer(nn.Module):
             actions.append(shoot_action)
             actions = torch.cat(actions, dim=-1)
             action_log_probs = torch.cat(action_log_probs, dim=-1).sum(dim=-1, keepdim=True)
+            
 
         else:
             action_dists = self.action_out(x)
