@@ -147,10 +147,10 @@ def test_plane(model_path, number_of_episodes, algorithm):
             print(infos)
             print(bloods)
             D[0]["states"].append(prev_ego_obs[0].reshape(-1))
-            D[0]["actions"].append(ego_actions)
-            D[0]["entropy"].append(entropy)
+            D[0]["actions"].append(ego_actions[0])
+            D[0]["entropy"].append(entropy[0])
             D[0]["dones"].append(True)
-            D[0]["rewards"].append(rewards)
+            D[0]["rewards"].append(rewards[0])
             D[0]["next_states"].append(next_ego_obs[0].reshape(-1))
             print("Collected data lengths:")
             
@@ -160,11 +160,12 @@ def test_plane(model_path, number_of_episodes, algorithm):
             print("Rewards:", len(D[0]["rewards"]))
             break
         
-        D[0]["states"].append(prev_ego_obs)
-        D[0]["actions"].append(ego_actions)
-        D[0]["entropy"].append(entropy)
+        D[0]["states"].append(prev_ego_obs[0].reshape(-1))
+        D[0]["actions"].append(ego_actions[0].reshape(-1))
+        D[0]["entropy"].append(entropy[0])
         D[0]["dones"].append(False)
         D[0]["rewards"].append(rewards[0])
+        D[0]["next_states"].append(next_ego_obs[0].reshape(-1))
         values.append(value)
         
         #----------------Integrated Gradients----------------
@@ -192,4 +193,4 @@ def test_plane(model_path, number_of_episodes, algorithm):
     print(episode_rewards)
     print(bloods)
 
-    return D, ego_policy, len(feature_labels), 4, values
+    return D, ego_policy, len(feature_labels), 4, values, feature_labels
