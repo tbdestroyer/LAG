@@ -195,20 +195,26 @@ class DatasetSplitter:
         self._updateVirtualPoints(rhs_set)
         
         return lhs_set, rhs_set
-        
+      
     def _splitNrVirtualPoints(self, dataset, idx, value, in_set, out_set):
         minV = dataset.get_min(idx)
         maxV = dataset.get_max(idx)
-        in_set.nr_virtual_points = int(abs(dataset.nr_virtual_points*((value-minV)/(maxV-minV))))
-        out_set.nr_virtual_points = dataset.nr_virtual_points - in_set.nr_virtual_points
+        denom = maxV - minV
+        if denom == 0:
+            print(f"[Warning] Feature index {idx} has constant value {minV}. Skipping split.")
+            in_set.nr_virtual_points = 0
+            out_set.nr_virtual_points = dataset.nr_virtual_points
+    
         if out_set.nr_virtual_points < 0:
             self.raiseUndefinedNumberOfPoints()
+        
+        return
     
     def _updateVirtualPoints(self, data_set):            
         nr_points_in_set = data_set.length()
         data_set.nr_virtual_points = self._calcNumberOfPointsToAdd(nr_points_in_set, data_set.nr_virtual_points)
         data_set.nr_total_instances = nr_points_in_set + data_set.nr_virtual_points
-            
+     
     def _calcNumberOfPointsToAdd(self, nr_points_in_node, nr_points_inherited):    
         if nr_points_inherited < nr_points_in_node:
             nr_points = nr_points_in_node

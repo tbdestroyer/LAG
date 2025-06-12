@@ -211,7 +211,7 @@ if __name__ == '__main__':
 
     else:
         raise ValueError('Enter valid environment')
-
+'''
     if args.zahavy_baseline:
         abstract_baseline = APG(num_actions, value_fn, translator)
         explain_zahavy(args, dataset, translator, abstract_baseline, num_actions, fidelity_fn, model_path, mode=args.alg)
@@ -222,7 +222,7 @@ if __name__ == '__main__':
     else:
         abstract_baseline = APG(num_actions, value_fn, translator)
         explain(args, dataset, model_path, translator, num_feats, num_actions, fidelity_fn, abstract_baseline, mode=args.alg)
-        '''
+    
 
 
 

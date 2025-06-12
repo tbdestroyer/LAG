@@ -55,7 +55,9 @@ def explain(args, dataset, model_path, translator, num_feats, num_actions, fidel
                     fidelity_scores=fidelity_scores)
         """
 
-        all_clusters = np.array(all_clusters)
+        #all_clusters = np.array(all_clusters)
+        all_clusters = np.array(all_clusters, dtype=object)
+
         best_clusters = all_clusters[best_heights]
         
 
