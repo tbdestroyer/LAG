@@ -1,0 +1,91 @@
+Starting graph generation...
+Height:  1
+Height:  2
+Height:  3
+Height:  4
+Height:  5
+Height:  6
+Height:  7
+Height:  8
+Height:  9
+Height:  10
+***********************************************
+Clusters at height 2
+Group 1 to Group 3 with p=1.0 and action 0
+Group 2 to Group 1 with p=0.00228310502283105 and action 0
+Group 2 to Group 2 with p=0.9977168949771599 and action 0
+----------------------------------------
+[0. 0. 0. 1. 0. 0. 0. 1. 1. 0. 0. 1. 0. 1. 0. 0. 0. 0. 1. 0. 1. 0. 1. 0.
+ 0. 1. 0. 1. 0. 0. 1. 0. 0. 1. 0. 0. 0. 0. 0. 1. 0. 1. 1. 0. 0. 1. 0. 0.]
+[0.53424658 0.         0.06164384 0.39726027 0.11872146 0.
+ 0.         0.22374429 0.89726027 0.         0.9086758  0.0913242
+ 0.         1.         0.         0.89041096 0.83789954 0.
+ 0.65296804 0.34703196 0.33789954 0.         0.03196347 0.16894977
+ 0.         0.65296804 0.34703196 0.79908676 0.         0.30593607
+ 0.29680365 0.60502283 0.         0.53196347 0.46803653 0.46803653
+ 0.         0.4543379  0.01369863 0.78310502 0.         0.53196347
+ 0.94520548 0.         0.12100457 0.60273973 0.4543379  0.01369863]
+Group 1: (Banked right) and (Level pitch or High forward speed) and (Descending or Low closure rate) and (Enemy to the left or Enemy very close)
+Critical value: 0.0. Entropy: 0.31
+Group 2: ((Enemy to the right and Enemy on right side) or (Enemy to the left and Enemy on left side) or (Enemy within missile range and Missile very close) or (Flying at high altitude and Missile approaching from behind and Missile above and Missile to the left and Missile on left side) or (Missile approaching from ahead and Missile on same altitude and Low angle-off to missile) or (High forward speed and Missile within lethal range) or (Flying at high altitude and Missile approaching from behind and Missile above and Missile to the left and Missile on left side)) and (Banked right) and (Level pitch) and (Climbing or Low closure rate) and (Enemy behind or Enemy above or Enemy very close)
+Critical value: 1.0. Entropy: 0.26
+----------------------------------------
+***********************************************
+Clusters at height 3
+Group 1 to Group 4 with p=1.0 and action 0
+Group 2 to Group 1 with p=1.0 and action 0
+Group 3 to Group 2 with p=0.002288329519450801 and action 0
+Group 3 to Group 3 with p=0.9977116704805467 and action 0
+----------------------------------------
+[0. 0. 0. 1. 0. 0. 0. 1. 1. 0. 0. 1. 0. 1. 0. 0. 0. 0. 1. 0. 1. 0. 1. 0.
+ 0. 1. 0. 1. 0. 0. 1. 0. 0. 1. 0. 0. 0. 0. 0. 1. 0. 1. 1. 0. 0. 1. 0. 0.]
+[0. 0. 0. 1. 0. 0. 0. 1. 1. 0. 1. 0. 0. 1. 0. 0. 0. 0. 1. 0. 1. 0. 1. 0.
+ 0. 1. 0. 1. 0. 0. 1. 0. 0. 1. 0. 0. 0. 0. 0. 1. 0. 1. 1. 0. 0. 1. 0. 0.]
+[0.53546911 0.         0.0617849  0.39588101 0.11899314 0.
+ 0.         0.22196796 0.89702517 0.         0.90846682 0.09153318
+ 0.         1.         0.         0.89244851 0.83981693 0.
+ 0.65217391 0.34782609 0.33638444 0.         0.02974828 0.16933638
+ 0.         0.65217391 0.34782609 0.798627   0.         0.30663616
+ 0.29519451 0.60640732 0.         0.53089245 0.46910755 0.46910755
+ 0.         0.45537757 0.01372998 0.7826087  0.         0.53089245
+ 0.94508009 0.         0.12128146 0.60183066 0.45537757 0.01372998]
+Group 1: (Banked right) and (Level pitch or High forward speed) and (Descending or Low closure rate) and (Enemy to the left or Enemy very close)
+Critical value: 0.0. Entropy: 0.31
+Group 2: (Banked right) and (Level pitch or High forward speed) and (Climbing or Low closure rate) and (Enemy to the left or Enemy very close)
+Critical value: 0.0. Entropy: 0.28
+Group 3: ((Enemy to the right and Enemy on right side) or (Enemy to the left and Enemy on left side) or (Enemy within missile range and Missile very close) or (Flying at high altitude and Missile approaching from behind and Missile above and Missile to the left and Missile on left side) or (Missile approaching from ahead and Missile on same altitude and Low angle-off to missile) or (High forward speed and Missile within lethal range) or (Flying at high altitude and Missile approaching from behind and Missile above and Missile to the left and Missile on left side)) and (Banked right) and (Level pitch) and (Climbing or Low closure rate) and (Enemy behind or Enemy above or Enemy very close)
+Critical value: 1.0. Entropy: 0.26
+----------------------------------------
+***********************************************
+Clusters at height 4
+Group 1 to Group 5 with p=1.0 and action 0
+Group 2 to Group 1 with p=1.0 and action 0
+Group 3 to Group 2 with p=1.0 and action 0
+Group 4 to Group 3 with p=0.0022935779816513763 and action 1
+Group 4 to Group 4 with p=0.9977064220183555 and action 0
+----------------------------------------
+[0. 0. 0. 1. 0. 0. 0. 1. 1. 0. 0. 1. 0. 1. 0. 0. 0. 0. 1. 0. 1. 0. 1. 0.
+ 0. 1. 0. 1. 0. 0. 1. 0. 0. 1. 0. 0. 0. 0. 0. 1. 0. 1. 1. 0. 0. 1. 0. 0.]
+[0. 0. 0. 1. 0. 0. 0. 1. 1. 0. 1. 0. 0. 1. 0. 0. 0. 0. 1. 0. 1. 0. 1. 0.
+ 0. 1. 0. 1. 0. 0. 1. 0. 0. 1. 0. 0. 0. 0. 0. 1. 0. 1. 1. 0. 0. 1. 0. 0.]
+[0. 0. 1. 1. 0. 0. 0. 1. 1. 0. 1. 0. 0. 1. 0. 0. 0. 0. 1. 0. 1. 0. 1. 0.
+ 0. 1. 0. 1. 0. 0. 1. 0. 0. 1. 0. 0. 0. 0. 0. 1. 0. 1. 1. 0. 0. 1. 0. 0.]
+[0.53669725 0.         0.05963303 0.39449541 0.11926606 0.
+ 0.         0.22018349 0.89678899 0.         0.90825688 0.09174312
+ 0.         1.         0.         0.89449541 0.84174312 0.
+ 0.65137615 0.34862385 0.33486239 0.         0.02752294 0.16972477
+ 0.         0.65137615 0.34862385 0.79816514 0.         0.30733945
+ 0.29357798 0.60779817 0.         0.52981651 0.47018349 0.47018349
+ 0.         0.45642202 0.01376147 0.78211009 0.         0.52981651
+ 0.94495413 0.         0.12155963 0.60091743 0.45642202 0.01376147]
+Group 1: (Banked right) and (Level pitch or High forward speed) and (Descending or Low closure rate) and (Enemy to the left or Enemy very close)
+Critical value: 0.0. Entropy: 0.31
+Group 2: (Banked right) and (Level pitch or High forward speed) and (Climbing or Low closure rate) and (Enemy to the left or Enemy very close)
+Critical value: 0.0. Entropy: 0.28
+Group 3: (Banked left or Banked right) and (Level pitch or High forward speed) and (Climbing or Low closure rate) and (Enemy to the left or Enemy very close)
+Critical value: 1.0. Entropy: 0.23
+Group 4: ((Enemy to the right and Enemy on right side) or (Enemy to the left and Enemy on left side) or (Enemy within missile range and Missile very close) or (Flying at high altitude and Missile approaching from behind and Missile above and Missile to the left and Missile on left side) or (Missile approaching from ahead and Missile on same altitude and Low angle-off to missile) or (High forward speed and Missile within lethal range) or (Flying at high altitude and Missile approaching from behind and Missile above and Missile to the left and Missile on left side)) and (Banked right) and (Level pitch) and (Climbing or Low closure rate) and (Enemy behind or Enemy above or Enemy very close)
+Critical value: 0.0. Entropy: 0.26
+----------------------------------------
+
+(jsbsim) C:\jsbsim_env\LAG>

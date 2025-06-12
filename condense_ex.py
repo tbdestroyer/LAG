@@ -96,7 +96,8 @@ class Explainer:
         for c_set in corr_sets:
             #print(c_set)
             for f in c_set:
-                non_corr_set.remove(f)
+                if f in non_corr_set:
+                    non_corr_set.remove(f)
 
         return corr_sets, non_corr_set
 
