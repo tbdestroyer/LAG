@@ -526,6 +526,121 @@ class PlanePredicates(PredicateTemplate):
         # state[13] is relative distance (in 10km units)
         return 1 if state[13] < 1.0 else 0  # <10km
     
+    def level_roll(self, state):
+        return 1 if np.abs(state[1]) < 0.1 else 0
+
+    def level_pitch(self, state):
+        return 1 if np.abs(state[3]) < 0.1 else 0
+
+    def climbing(self, state):
+        return 1 if state[7] > 0 else 0
+
+    def descending(self, state):
+        return 1 if state[7] < 0 else 0
+
+    def high_closure_rate(self, state):
+        return 1 if state[9] > 0.8 else 0
+
+    def low_closure_rate(self, state):
+        return 1 if state[9] < 0.2 else 0
+
+    def enemy_behind(self, state):
+        return 1 if state[12] > np.pi * 3/4 else 0
+
+    def enemy_above(self, state):
+        return 1 if state[10] < -0.5 else 0
+
+    def enemy_below(self, state):
+        return 1 if state[10] > 0.5 else 0
+
+    def enemy_to_left(self, state):
+        return 1 if state[14] == -1 else 0
+
+    def enemy_to_right(self, state):
+        return 1 if state[14] == 1 else 0
+
+    def enemy_same_altitude(self, state):
+        return 1 if np.abs(state[10]) < 0.1 else 0
+
+    def enemy_higher_energy(self, state):
+        return 1 if state[8] < 0.5 else 0
+
+    def enemy_lower_energy(self, state):
+        return 1 if state[8] > 1.5 else 0
+
+    def enemy_on_left(self, state):
+        return 1 if state[14] == -1 else 0
+
+    def enemy_on_right(self, state):
+        return 1 if state[14] == 1 else 0
+
+    def enemy_within_missile_range(self, state):
+        return 1 if state[13] < 1.5 else 0
+
+    def enemy_outside_missile_range(self, state):
+        return 1 if state[13] > 3.0 else 0
+
+    def high_angle_off_enemy(self, state):
+        return 1 if state[11] > np.pi/2 else 0
+
+    def low_angle_off_enemy(self, state):
+        return 1 if state[11] < np.pi/6 else 0
+
+    def high_tail_aspect(self, state):
+        return 1 if state[12] > 2.5 else 0
+
+    def high_nose_aspect(self, state):
+        return 1 if state[12] < 0.5 else 0
+
+    def missile_approaching_front(self, state):
+        return 1 if state[18] < 0.5 else 0
+
+    def missile_approaching_behind(self, state):
+        return 1 if state[18] > 2.5 else 0
+
+    def missile_above(self, state):
+        return 1 if state[16] < -0.5 else 0
+
+    def missile_below(self, state):
+        return 1 if state[16] > 0.5 else 0
+
+    def missile_to_left(self, state):
+        return 1 if state[20] == -1 else 0
+
+    def missile_to_right(self, state):
+        return 1 if state[20] == 1 else 0
+
+    def missile_very_close(self, state):
+        return 1 if state[19] < 1.0 else 0
+
+    def missile_far_away(self, state):
+        return 1 if state[19] > 3.0 else 0
+
+    def missile_same_altitude(self, state):
+        return 1 if np.abs(state[16]) < 0.1 else 0
+
+    def missile_within_lethal_range(self, state):
+        return 1 if state[19] < 2.0 else 0
+
+    def missile_outside_lethal_range(self, state):
+        return 1 if state[19] > 4.0 else 0
+
+    def high_angle_off_missile(self, state):
+        return 1 if state[17] > np.pi/2 else 0
+
+    def low_angle_off_missile(self, state):
+        return 1 if state[17] < np.pi/6 else 0
+
+    def missile_on_left(self, state):
+        return 1 if state[20] == -1 else 0
+
+    def missile_on_right(self, state):
+        return 1 if state[20] == 1 else 0
+    
+    def enemy_far_away(self,state):
+        return 1 if state[13] > 3.0 else 0
+    
+    
 class LunarLanderPredicates(PredicateTemplate):
     def __init__(self, num_feats):
         super().__init__(num_feats)
@@ -655,6 +770,9 @@ class LunarLanderPredicates(PredicateTemplate):
             return 1
         else:
             return 0
+    
+    
+
 
 
 class BlackjackPredicates(PredicateTemplate):

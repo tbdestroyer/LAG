@@ -98,14 +98,14 @@ def test_plane(model_path, number_of_episodes, algorithm):
     ego_policy.eval()
     enm_policy.eval()
     ego_policy.load_state_dict(torch.load(ego_run_dir + f"/actor_520.pt"))
-    enm_policy.load_state_dict(torch.load(enm_run_dir + f"/actor_520.pt"))
+    enm_policy.load_state_dict(torch.load(enm_run_dir + f"/actor_1040.pt"))
 
 
     print("Start render")
     obs = env.reset()
     tacview = Tacview()
     if render:
-        env.render(mode="txt", tacview=tacview)
+        env.render(mode="real_time", tacview=tacview)
     ego_rnn_states = np.zeros((1, 1, 128), dtype=np.float32)
     masks = np.ones((num_agents // 2, 1))
     enm_obs =  obs[num_agents // 2:, :]
@@ -142,7 +142,7 @@ def test_plane(model_path, number_of_episodes, algorithm):
         next_ego_obs = obs[:num_agents // 2, :]
 
         if render:
-            env.render(mode='txt',tacview=tacview)
+            env.render(mode='real_time',tacview=tacview)
         if dones.all():
             print(infos)
             print(bloods)
