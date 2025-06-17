@@ -41,7 +41,7 @@ if __name__ == '__main__':
     
     if args.env == "plane":
         pass
-        data, model, num_feats, num_actions, values,feature_labels = test_plane(None, None, None)
+        data, model, num_feats, num_actions, values, feature_labels = test_plane(None, args.num_episodes, None)
         # if args.calc_fidelity
         #     fidelity_fn = calculate_fidelity_plane
         def load_critic():
@@ -58,7 +58,8 @@ if __name__ == '__main__':
         
         values_dict = {}
         for i in range(len(values)):
-            values_dict[data[0]["states"][i][0].tobytes()] = values[i]
+            for j in range(len(values[i])):
+                values_dict[data[i]["states"][j][0].tobytes()] = values[i][j]
 
         def value_fn(obs):
             global values_dict
@@ -105,13 +106,14 @@ if __name__ == '__main__':
             print(f"{tag}: {len(lst)}")
             for i, x in enumerate(lst[:5]):
                 print(f"  [{i}] shape: {np.array(x).shape}")
-        for i in range(len(data[0]["states"])):
-            data[0]["states"][i] = np.array(data[0]["states"][i]).reshape(-1)
-            data[0]["next_states"][i] = np.array(data[0]["next_states"][i]).reshape(-1)
-            data[0]["actions"][i] = np.array(data[0]["actions"][i]).reshape(-1)
-            data[0]["entropy"][i] = np.array(data[0]["entropy"][i]).reshape(())  # scalar
-            data[0]["rewards"][i] = np.array(data[0]["rewards"][i]).reshape(())  # scalar
-            data[0]["dones"][i] = np.array(data[0]["dones"][i]).reshape(())      # scalar
+        for i in range(len(data)):
+            for j in range(len(data[i]["states"])):
+                data[i]["states"][j] = np.array(data[i]["states"][j]).reshape(-1)
+                data[i]["next_states"][j] = np.array(data[i]["next_states"][j]).reshape(-1)
+                data[i]["actions"][j] = np.array(data[i]["actions"][j]).reshape(-1)
+                data[i]["entropy"][j] = np.array(data[i]["entropy"][j]).reshape(())  # scalar
+                data[i]["rewards"][j] = np.array(data[i]["rewards"][j]).reshape(())  # scalar
+                data[i]["dones"][j] = np.array(data[i]["dones"][j]).reshape(())      # scalar
         print_shapes("states", data[0]["states"])
         print_shapes("next_states", data[0]["next_states"])
         print_shapes("actions", data[0]["actions"])
