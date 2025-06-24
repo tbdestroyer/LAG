@@ -1,13 +1,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from CLTree import CLTree
+#from CLTree import CLTree
 from data import InstanceData
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
 
 
 def cluster_data(translator, abstraction_helper, dataset, attr_names, alpha, num_actions, lmbda, k, max_height=20, model_path=None, env='grid'):
     cluster_data = InstanceData(dataset.cluster_input, dataset.num_feats+2, attr_names)
-    cltree = CLTree(cluster_data)     
-    cltree.buildTree()
+    #cltree = CLTree(cluster_data)     
+    #cltree.buildTree()
                     
 
     height = max_height
@@ -24,6 +27,87 @@ def cluster_data(translator, abstraction_helper, dataset, attr_names, alpha, num
     test_alphas = test_alphas / 100
     test_alpha_scores = []
 
+    X = cluster_data.instance_values
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    
+    
+    imputer = SimpleImputer(strategy="mean")
+    X_scaled = imputer.fit_transform(X_scaled)
+
+    all_clusters = []
+    for n_clusters in range(2, k+1):
+        agg = AgglomerativeClustering(n_clusters=n_clusters)
+        labels = agg.fit_predict(X_scaled)
+        clusters = [np. where(labels ==i)[0]  for i in range(n_clusters)]
+        all_clusters.append(clusters)
+        lengths.append(len(clusters))
+    
+    #scoring logic
+        abstract_state_groups = []
+        abstract_binary_state_groups = []
+        cluster_values = []
+        cluster_policies = []
+        for cluster in clusters:
+            abs_t = []
+            bin_t = []
+            v = []
+            a = np.zeros(num_actions)
+            for arr in cluster:
+                for idx in np.atleast_1d(arr):
+                    idx = int(idx)
+                    val = dataset.values[idx]
+                    v.append(val)
+                    a[dataset.actions[idx]] += 1
+                    abs_t.append((dataset.states[idx], dataset.actions[idx], dataset.next_states[idx], dataset.dones[idx], dataset.entropies[idx], dataset.rewards[idx]))
+                    binary = translator.state_to_binary(dataset.states[idx])
+                    bin_t.append((binary, dataset.actions[idx]))
+                abstract_state_groups.append(abs_t)
+                abstract_binary_state_groups.append(bin_t)
+                cluster_values.append(sum(v)/len(v) if v else 0)
+                a = a / np.sum(a) if np.sum(a) > 0 else a
+                cluster_policies.append(a)
+
+        cluster_values = np.array(cluster_values)
+        pred_cluster_values = []
+        abs_t = abstract_state_groups
+        bin_t = abstract_binary_state_groups
+        l, transitions, taken_actions = abstraction_helper.compute_graph_info(abs_t)
+        cl_entropies = []
+
+        for j, cluster in enumerate(clusters):
+            transition_probs = np.array(transitions[j][:-1])
+            pred_cluster_values.append(lmbda * sum(transition_probs * cluster_values))
+            cl_pol = np.array(cluster_policies[j])
+            cl_pol_nonzero = cl_pol[cl_pol != 0]
+            entr = -sum(cl_pol_nonzero * np.log2(cl_pol_nonzero))
+            cl_entropies.append(entr)
+
+        val_score = np.linalg.norm(cluster_values - pred_cluster_values) / np.linalg.norm(cluster_values) if np.linalg.norm(cluster_values) > 0 else 0
+        val_score = np.square(cluster_values - pred_cluster_values).mean()
+        entropy_score = sum(cl_entropies) / len(cl_entropies) if cl_entropies else 0
+
+        score = val_score + entropy_score
+        a_score = score + alpha * len(clusters)
+
+        value_scores.append(val_score)
+        entropy_scores.append(entropy_score)
+        cluster_scores.append(a_score)
+
+    cluster_scores = np.array(cluster_scores)
+    lengths = np.array(lengths)
+
+    best_graph_idx = np.argsort(cluster_scores)
+    best_graphs = best_graph_idx[:k]
+    best_graphs = np.squeeze(best_graphs)
+    best_graphs = np.array(best_graphs, dtype=np.int32)
+    if best_graphs[0] == 0:  # Don't want to include the low graph since its value score is always low
+        best_graphs = best_graph_idx[1:k+1]
+    
+    return all_clusters, best_graphs, cluster_scores, value_scores, entropy_scores, lengths
+
+    
+'''
     print('Starting graph generation...')
     for i in range(height):
         print('Height: ', i+1)
@@ -53,6 +137,7 @@ def cluster_data(translator, abstraction_helper, dataset, attr_names, alpha, num
             bin_t = []
             v = []
             a = np.zeros(num_actions)
+            
             for idx in cluster:
                 idx = int(idx)
                 val = dataset.values[idx]
@@ -131,6 +216,7 @@ def cluster_data(translator, abstraction_helper, dataset, attr_names, alpha, num
         best_graphs = best_graph_idx[1:k+1]
     
     return all_clusters, best_graphs, cluster_scores, value_scores, entropy_scores, lengths
+'''
 
 def graph_scores(env, alpha, lengths, cluster_scores=None, value_scores=None, entropy_scores=None, fidelity_scores=None):
     plt.style.use('ggplot')
@@ -184,3 +270,4 @@ def graph_scores(env, alpha, lengths, cluster_scores=None, value_scores=None, en
         plt.title('Fidelity vs Graph Size')
         plt.savefig('results/heuristic_graphs/{}_fidelity_vs_size.png'.format(env))
         plt.clf()
+        

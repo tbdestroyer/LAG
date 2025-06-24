@@ -120,11 +120,17 @@ def explain(args, dataset, model_path, translator, num_feats, num_actions, fidel
             
             #CAPS explanation producer
             print('----------------------------------------')
+            output = ""
             translations = translator.my_translation_algo(bin_t)
             for j, t in enumerate(translations):
-                print('Group {}: {}'.format(j+1, t))
+                output += 'Group {}: {}\n'.format(j+1, t)
+                #rint('Group {}: {}'.format(j+1, t))
                 if args.hayes_baseline:
-                    print('(Hayes) Group {}: {}'.format(j+1, hayes_translations[j]))
-                print('Critical value: {}. Entropy: {:.2f}'.format(critical_values[j], group_ent[j]))
+                    output +=('(Hayes) Group {}: {}'.format(j+1, hayes_translations[j]))
+                output +=('Critical value: {}. Entropy: {:.2f}'.format(critical_values[j], group_ent[j]))
             print('----------------------------------------')
+            return output
+            
+            
+            
 
