@@ -81,8 +81,8 @@ enm_policy_index = 1040
 episode_rewards = 0
 #ego_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run4"
 #enm_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run4"
-ego_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run4"
-enm_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run4"
+ego_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run3"
+enm_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run3"
 experiment_name = ego_run_dir.split('/')[-4]
 
 env = SingleCombatEnv("1v1/ShootMissile/HierarchySelfplay")
@@ -95,8 +95,8 @@ ego_policy.eval()
 enm_policy.eval()
 #ego_policy.load_state_dict(torch.load(ego_run_dir + f"/actor_4141.pt"))
 #enm_policy.load_state_dict(torch.load(enm_run_dir + f"/actor_4156.pt"))
-ego_policy.load_state_dict(torch.load(ego_run_dir + f"/actor_4141.pt"))
-enm_policy.load_state_dict(torch.load(enm_run_dir + f"/actor_4156.pt"))
+ego_policy.load_state_dict(torch.load(ego_run_dir + f"/actor_520.pt"))
+enm_policy.load_state_dict(torch.load(enm_run_dir + f"/actor_1040.pt"))
 
 
 print("Start render")
@@ -326,10 +326,34 @@ def rationale(entry):
     return (f'I performed {entry["action"]} because {facts_str}. '
             f'This occurred at {entry["t"]:.1f}s, during behavior stage {entry["cluster"]}. '
             f'(Top IG: {ig_str})')
-    
+
+cluster_to_top_ig = {}
+
 for i, entry in enumerate(explanation_log):
     if i == 0 or entry["cluster"] != explanation_log[i-1]["cluster"]:
         prev = explanation_log[i-1] if i > 0 else None
         print(f'Agent entered behavior stage {entry["cluster"]} at {entry["t"]:.1f}s '
               f'due to spikes in {", ".join(entry["top_IG_features"])}.')
+    else:
+        if entry["cluster"] not in cluster_to_top_ig:
+            cluster_to_top_ig[entry["cluster"]] = {"first" : [], "second" : []}
+        cluster_to_top_ig[entry["cluster"]]["first"].append(entry["top_IG_features"][0])
+        cluster_to_top_ig[entry["cluster"]]["second"].append(entry["top_IG_features"][1])
+    
     print(rationale(entry))
+
+for cluster, features in cluster_to_top_ig.items():
+    cluster_first_ig = np.array(features["first"])
+    cluster_second_ig = np.array(features["second"])
+
+    # Get the number of steps for each integrated gradient
+    unique_first, counts_first = np.unique(cluster_first_ig, return_counts=True)
+    unique_second, counts_second = np.unique(cluster_second_ig, return_counts=True)
+
+    # Output the most frequent first/second integrated gradient
+    top_first = unique_first[np.argmax(counts_first)]
+    top_second = unique_second[np.argmax(counts_second)]
+
+    print(f'Cluster {cluster} has top features {top_first} (first) and {top_second} (second)')
+
+
