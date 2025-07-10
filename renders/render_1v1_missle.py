@@ -81,8 +81,8 @@ enm_policy_index = 1040
 episode_rewards = 0
 #ego_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run4"
 #enm_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run4"
-ego_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run3"
-enm_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run3"
+ego_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run4"
+enm_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run4"
 experiment_name = ego_run_dir.split('/')[-4]
 
 env = SingleCombatEnv("1v1/ShootMissile/HierarchySelfplay")
@@ -95,8 +95,8 @@ ego_policy.eval()
 enm_policy.eval()
 #ego_policy.load_state_dict(torch.load(ego_run_dir + f"/actor_4141.pt"))
 #enm_policy.load_state_dict(torch.load(enm_run_dir + f"/actor_4156.pt"))
-ego_policy.load_state_dict(torch.load(ego_run_dir + f"/actor_520.pt"))
-enm_policy.load_state_dict(torch.load(enm_run_dir + f"/actor_1040.pt"))
+ego_policy.load_state_dict(torch.load(ego_run_dir + f"/actor_4141.pt"))
+enm_policy.load_state_dict(torch.load(enm_run_dir + f"/actor_4156.pt"))
 
 
 print("Start render")
@@ -141,7 +141,9 @@ def extract_facts(obs, prev_obs=None):
     target_aspect = feature_labels.index("Target Aspect (rad)")
     missile_relative_distance = feature_labels.index("missile relative distance")
     missile_delta_v_body_x = feature_labels.index("missile delta_v_body_x")
+    missile_side_flag = feature_labels.index("missile side flag")
     # Example thresholds (update as needed):
+    
     '''
     if obs[missile_distance_idx] < 0.08:  # 0.08*10km = 800m
         facts.append("missile_threat")
@@ -168,6 +170,8 @@ def extract_facts(obs, prev_obs=None):
             facts.append("delta_altitude_increasing")
         elif obs[delta_altitude_idx] < prev_obs[delta_altitude_idx]:
             facts.append("delta_altitude_decreasing")
+    
+    '''
     '''
     if obs[relative_distance] < 0.15 and obs[angle_off_idx] < 0.52 and obs[target_aspect] > 2.8:
         facts.append("Offesnive Kill Oppurtunity")
@@ -177,6 +181,7 @@ def extract_facts(obs, prev_obs=None):
         facts.append("missile threat from right")
     if obs[missile_relative_distance] < 0.2 and obs[missile_delta_v_body_x] > 0 and obs[missile_side_flag] < 0:
         facts.append("missile threat from left")
+    '''
     
     return facts
 
@@ -212,7 +217,7 @@ while True:
     # Update green bars
     for i, bar in enumerate(green_bars):
         bar.set_width(attr[i])
-        bar.set_x(0 if attr[i] >= 0 else attr[i])
+        bar.set_x(0)
         # Optional: set color based on sign
         bar.set_color('green' if attr[i] >= 0 else 'lime')
     fig.canvas.draw_idle()
@@ -269,8 +274,9 @@ for i in range(len(data_matrix)):
     attr_start = len(feature_labels) + 4
     attr = data_matrix[i][attr_start:]
     # Get top 2 IG features
-    attr = all_attributions[i]
+    # attr = all_attributions[i]
     top_ig_idx = np.argsort(np.abs(attr))[::-1]
+    print("Top integrated gradients are ", top_ig_idx)
     top_ig_features = [feature_labels[j] for j in top_ig_idx[:2]]
     facts = extract_facts(obs,prev_obs)
     cluster = cluster_labels[i]
