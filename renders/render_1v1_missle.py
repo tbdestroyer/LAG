@@ -12,6 +12,9 @@ from captum.attr._core.integrated_gradients import IntegratedGradients
 from sklearn.decomposition import PCA 
 import hdbscan
 from renders.render_utils import *
+import PySimpleGUI as sg
+import time
+from scipy.stats import mode
 
 class Args:
     def __init__(self) -> None:
@@ -80,10 +83,10 @@ render = True
 ego_policy_index = 1040
 enm_policy_index = 1040
 episode_rewards = 0
-#ego_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run4"
-#enm_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run4"
-ego_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run3"
-enm_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run3"
+ego_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run4"
+enm_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run4"
+#ego_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run3"
+#enm_run_dir = "scripts/results/SingleCombat/1v1/ShootMissile/HierarchySelfplay/ppo/v1/run3"
 experiment_name = ego_run_dir.split('/')[-4]
 
 env = SingleCombatEnv("1v1/ShootMissile/HierarchySelfplay")
@@ -97,7 +100,7 @@ enm_policy.eval()
 #ego_policy.load_state_dict(torch.load(ego_run_dir + f"/actor_4141.pt"))
 #enm_policy.load_state_dict(torch.load(enm_run_dir + f"/actor_4156.pt"))
 ego_policy.load_state_dict(torch.load(ego_run_dir + f"/actor_520.pt"))
-enm_policy.load_state_dict(torch.load(enm_run_dir + f"/actor_1040.pt"))
+enm_policy.load_state_dict(torch.load(enm_run_dir + f"/actor_600.pt"))
 
 
 print("Start render")
@@ -187,6 +190,7 @@ def extract_facts(obs, prev_obs=None):
     
     return facts
 
+
 # Initialize the dataset for storing observations, actions, and attributions
 while True:
     ego_actions, _, ego_rnn_states = ego_policy(ego_obs, ego_rnn_states, masks, deterministic=True)
@@ -213,9 +217,11 @@ while True:
     ig = IntegratedGradients(model_forward, False)
     attributions, delta = ig.attribute(input, baseline, target=0, return_convergence_delta=True)
 #--------------------------------------
+
     attr = attributions[0].detach().cpu().numpy()  # shape: (15,)
     all_attributions = []
     all_attributions.append(attr)
+    
     # Update green bars
     for i, bar in enumerate(green_bars):
         bar.set_width(attr[i])
@@ -225,6 +231,7 @@ while True:
     fig.canvas.draw_idle()
     plt.pause(0.01)
     
+        
     bloods = [env.agents[agent_id].bloods for agent_id in env.agents.keys()]
     print(f"step:{env.current_step}, bloods:{bloods} Attributions:{attributions} Delta:{delta}")
     enm_obs =  obs[num_agents // 2:, ...]
@@ -236,6 +243,7 @@ while True:
     enm_data_rows.append(enm_obs[0])
     data_matrix = np.vstack(data_rows)
 
+    
 
 print(episode_rewards)
 print(bloods)
@@ -269,6 +277,7 @@ plt.savefig("clusters_in_pca_space.png")
 explanation_log = []
 step_size = 0.2 
 prev_obs = None 
+
 for i in range(len(data_matrix)):
     t = i * step_size
     obs = data_matrix[i][:len(feature_labels)]
@@ -294,20 +303,30 @@ for i in range(len(data_matrix)):
     all_attributions.append(attr)
 # Calculate step size in seconds
 total_steps = len(cluster_labels)
-total_seconds = 87  # Your episode duration in seconds (1:27)
-step_size = total_seconds / total_steps
+step_size = 0.2
 
 # Generate time labels in seconds
 seconds = np.arange(total_steps) * step_size
-
 time_labels = [sec_to_minsec(sec) for sec in seconds]
+def mode_filter(sequence, window_size=5):
+    half = window_size // 2
+    padded = np.pad(sequence, (half, half), mode='edge')
+    smoothed = [
+        mode(padded[i:i + window_size], keepdims=False).mode
+        for i in range(len(sequence))
+    ]
+    return np.array(smoothed)
 
+smoothed_mode = mode_filter(cluster_labels, window_size=30)
+#50 was good
 # Plot with minute:second x-axis labels
 plt.figure(figsize=(14, 3))
-plt.plot(cluster_labels, drawstyle='steps-post')
+plt.plot(cluster_labels, label = 'Original', drawstyle='steps-post')
+plt.plot(smoothed_mode, label='Mode Filter', linewidth=2)
 plt.xlabel('Time (min:sec)')
 plt.ylabel('Behavioral Stage (Cluster)')
 plt.title('HDBSCAN Behavioral Stages Over Time (min:sec)')
+plt.legend()
 
 # Set x-ticks to every Nth label for readability
 N = max(1, total_steps // 15)
@@ -327,6 +346,8 @@ for i, entry in enumerate(explanation_log):
 
 cluster_times = get_cluster_times(explanation_log)
 top_integrated_gradients_in_cluster = get_most_frequent_integrated_gradients_in_cluster(explanation_log)
+#layout = [[sg.Text('', key='-WORD-', font=('Arial', 48), size=(15,1),justification='center')]]
+#window = sg.Window('Live Status',layout, finalize=True, keep_on_top=True, no_titlebar=True)  
 
 for cluster, times in cluster_times.items():
     print(f'Cluster {cluster} is from {times[0]} to {times[1]}')
@@ -336,6 +357,15 @@ for cluster in top_integrated_gradients_in_cluster:
     second = top_integrated_gradients_in_cluster[cluster]["second"]
     print(f'Cluster {cluster} has top features {first} (first) and {second} (second)')
     print()
+    if (first) == 'missile relative distance' and (second) == 'missile ego_AO' :
+        print('Navigating...')
+    if (first) == 'missile relative distance' and (second) == 'Z Velocity (mh)' :
+        print('Dodging...')
+    if (first) == 'ego_pitch_sin' and (second) == 'Z Velocity (mh)' :
+        print('Positioning...')
+    if (first) == 'ego_pitch_sin' and (second) =='delta_altitude (km)' :
+        print('Attacking...')
+    
 
 label = feature_labels.index("missile relative distance")
 print("Enemy missile launch at start" if data_matrix[0][label] != 0 else "")
@@ -352,3 +382,4 @@ for i in range(1, len(enm_data_rows)):
         print("Self missile launch at ", steps_to_minsec(i, step_size))
     if enm_data_rows[i - 1][label] != 0 and enm_data_rows[i][label] == 0:
         print("Self missile detonation at ", steps_to_minsec(i, step_size))
+#Plot Label for Top-IG Features
