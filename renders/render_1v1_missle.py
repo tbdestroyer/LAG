@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from captum.attr._core.integrated_gradients import IntegratedGradients
 from sklearn.decomposition import PCA 
 import hdbscan
+from renders.render_utils import *
 
 class Args:
     def __init__(self) -> None:
@@ -110,6 +111,7 @@ enm_obs =  obs[num_agents // 2:, :]
 ego_obs =  obs[:num_agents // 2, :]
 enm_rnn_states = np.zeros_like(ego_rnn_states, dtype=np.float32)
 data_rows = []
+enm_data_rows = []
 
 def extract_facts(obs, prev_obs=None):
     facts = []
@@ -231,6 +233,7 @@ while True:
     print(ego_actions)
     print(attr)
     data_rows.append(np.hstack((ego_obs[0], ego_actions[0], attr)))
+    enm_data_rows.append(enm_obs[0])
     data_matrix = np.vstack(data_rows)
 
 
@@ -297,12 +300,6 @@ step_size = total_seconds / total_steps
 # Generate time labels in seconds
 seconds = np.arange(total_steps) * step_size
 
-# Convert seconds to minute:second strings
-def sec_to_minsec(sec):
-    m = int(sec // 60)
-    s = int(sec % 60)
-    return f"{m}:{s:02d}"
-
 time_labels = [sec_to_minsec(sec) for sec in seconds]
 
 # Plot with minute:second x-axis labels
@@ -320,86 +317,12 @@ plt.tight_layout()
 plt.show()
 plt.savefig("behavioral_stages_over_time_minsec.png")
 
-def rationale(entry):
-    facts_str = " and ".join(entry["facts"]) if entry["facts"] else "no salient facts"
-    ig_str = ", ".join(entry["top_IG_features"])
-    return (f'I performed {entry["action"]} because {facts_str}. '
-            f'This occurred at {entry["t"]:.1f}s, during behavior stage {entry["cluster"]}. '
-            f'(Top IG: {ig_str})')
-
-
-def get_cluster_times(explanation_log):
-    """
-    Return the start and end times for all clusters in the explanation log.
-    
-    Args:
-        explanation_log: A list of information from each timestep
-
-    Returns:
-        cluster_times: A dictionary where the clusters are keys and the values are 2-element lists, where the \
-        first element is the start time and the second element is the end time.
-    """
-    cluster_times = {}
-
-    for i, entry in enumerate(explanation_log):
-        current_cluster = entry["cluster"]
-        if current_cluster not in cluster_times:
-            cluster_times[current_cluster] = [entry["t"], entry["t"]]
-        else:
-            if entry["t"] < cluster_times[current_cluster][0]:
-                cluster_times[current_cluster][0] = entry["t"]
-            if entry["t"] > cluster_times[current_cluster][1]:
-                cluster_times[current_cluster][1] = entry["t"]
-    
-    return cluster_times
-
-def get_most_frequent_integrated_gradients_in_cluster(explanation_log):
-    """
-    Return the most frequent integrated gradient (IG) in the first and second slot.
-    
-    Args:
-        explanation_log: A list of information from each timestep
-
-    Returns:
-        cluster_top_integrated_gradients_in_clustertimes: A dictionary where the clusters are keys and the values are 2-element lists, \
-        where the first element is the most frequent IG in the first slot and the second element is the most frequent IG in the second slot.
-    """
-
-    # First, generate two lists per cluster, one for all first place IG, one for all second place IG
-    cluster_to_top_ig = {}
-    for i, entry in enumerate(explanation_log):
-        if not (i == 0 or entry["cluster"] != explanation_log[i-1]["cluster"]):
-            if entry["cluster"] not in cluster_to_top_ig:
-                cluster_to_top_ig[entry["cluster"]] = {"first" : [], "second" : []}
-            cluster_to_top_ig[entry["cluster"]]["first"].append(entry["top_IG_features"][0])
-            cluster_to_top_ig[entry["cluster"]]["second"].append(entry["top_IG_features"][1])
-    
-    # Second, for each cluster, get the most frequent IG in each list
-    top_integrated_gradients_in_cluster = {}
-    for cluster, features in cluster_to_top_ig.items():
-        cluster_first_ig = np.array(features["first"])
-        cluster_second_ig = np.array(features["second"])
-
-        # Get the number of steps for each integrated gradient
-        unique_first, counts_first = np.unique(cluster_first_ig, return_counts=True)
-        unique_second, counts_second = np.unique(cluster_second_ig, return_counts=True)
-
-        # Output the most frequent first/second integrated gradient
-        top_first = unique_first[np.argmax(counts_first)]
-        top_second = unique_second[np.argmax(counts_second)]
-
-        top_integrated_gradients_in_cluster[cluster] = {"first" : top_first, "second" : top_second}
-
-    return top_integrated_gradients_in_cluster
-
 # Output cluster information and relevant explainability
 for i, entry in enumerate(explanation_log):
     if i == 0 or entry["cluster"] != explanation_log[i-1]["cluster"]:
         prev = explanation_log[i-1] if i > 0 else None
         print(f'Agent entered behavior stage {entry["cluster"]} at {entry["t"]:.1f}s '
               f'due to spikes in {", ".join(entry["top_IG_features"])}.')
-    
-    
     print(rationale(entry))
 
 cluster_times = get_cluster_times(explanation_log)
@@ -413,14 +336,19 @@ for cluster in top_integrated_gradients_in_cluster:
     second = top_integrated_gradients_in_cluster[cluster]["second"]
     print(f'Cluster {cluster} has top features {first} (first) and {second} (second)')
     print()
-    if first == "missile relative distance":
-        label = feature_labels.index("missile relative distance")
 
-        # Iterate over all steps in the time range. The increment for range() is step_size
-        for i in range(int(cluster_times[cluster][0] / step_size), int((cluster_times[cluster][1] + step_size) / step_size)):
-            print(i, label, data_matrix[i][label])
+label = feature_labels.index("missile relative distance")
+print("Enemy missile launch at start" if data_matrix[0][label] != 0 else "")
+for i in range(1, len(data_matrix)):
+    label = feature_labels.index("missile relative distance")
+    if data_matrix[i - 1][label] == 0 and data_matrix[i][label] != 0:
+        print("Enemy missile launch at ", steps_to_minsec(i, step_size))
+    if data_matrix[i - 1][label] != 0 and data_matrix[i][label] == 0:
+        print("Enemy missile detonation at ", steps_to_minsec(i, step_size))
 
-
-
-
-print(data_matrix, data_matrix.shape)
+for i in range(1, len(enm_data_rows)):
+    label = feature_labels.index("missile relative distance")
+    if enm_data_rows[i - 1][label] == 0 and enm_data_rows[i][label] != 0:
+        print("Self missile launch at ", steps_to_minsec(i, step_size))
+    if enm_data_rows[i - 1][label] != 0 and enm_data_rows[i][label] == 0:
+        print("Self missile detonation at ", steps_to_minsec(i, step_size))
