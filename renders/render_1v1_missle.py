@@ -12,7 +12,6 @@ from captum.attr._core.integrated_gradients import IntegratedGradients
 from sklearn.decomposition import PCA 
 import hdbscan
 from renders.render_utils import *
-import PySimpleGUI as sg
 import time
 from scipy.stats import mode
 
@@ -253,26 +252,8 @@ data_pca = pca.transform(data_matrix)
 
 # After you have data_pca from PCA
 clusterer = hdbscan.HDBSCAN(min_cluster_size=10)  # You can tune min_cluster_size
+# Cluster labels is a list of cluster labels from 0 to n-1 timesteps
 cluster_labels = clusterer.fit_predict(data_pca)
-
-# Plot cluster assignments over time
-plt.figure(figsize=(12, 3))
-plt.plot(cluster_labels, drawstyle='steps-post')
-plt.xlabel('Timestep')
-plt.ylabel('Behavioral Stage (Cluster)')
-plt.title('HDBSCAN Behavioral Stages Over Time')
-plt.show()
-plt.savefig("behavioral_stages_over_time.png")
-
-# Optional: Visualize clusters in PCA space
-plt.figure()
-plt.scatter(data_pca[:, 0], data_pca[:, 1], c=cluster_labels, cmap='tab10', s=10)
-plt.xlabel('PC1')
-plt.ylabel('PC2')
-plt.title('HDBSCAN Clusters in PCA Space')
-plt.colorbar(label='Cluster')
-plt.show()
-plt.savefig("clusters_in_pca_space.png")
 
 explanation_log = []
 step_size = 0.2 
@@ -319,22 +300,6 @@ def mode_filter(sequence, window_size=5):
 
 smoothed_mode = mode_filter(cluster_labels, window_size=30)
 #50 was good
-# Plot with minute:second x-axis labels
-plt.figure(figsize=(14, 3))
-plt.plot(cluster_labels, label = 'Original', drawstyle='steps-post')
-plt.plot(smoothed_mode, label='Mode Filter', linewidth=2)
-plt.xlabel('Time (min:sec)')
-plt.ylabel('Behavioral Stage (Cluster)')
-plt.title('HDBSCAN Behavioral Stages Over Time (min:sec)')
-plt.legend()
-
-# Set x-ticks to every Nth label for readability
-N = max(1, total_steps // 15)
-plt.xticks(np.arange(0, total_steps, N), [time_labels[i] for i in range(0, total_steps, N)], rotation=45)
-
-plt.tight_layout()
-plt.show()
-plt.savefig("behavioral_stages_over_time_minsec.png")
 
 # Output cluster information and relevant explainability
 for i, entry in enumerate(explanation_log):
@@ -368,18 +333,91 @@ for cluster in top_integrated_gradients_in_cluster:
     
 
 label = feature_labels.index("missile relative distance")
-print("Enemy missile launch at start" if data_matrix[0][label] != 0 else "")
+
+enemy_missile_launches = []
+enemy_missile_detonations = []
+friendly_missile_launches = []
+friendly_missile_detonations = []
+
+if data_matrix[0][label] != 0:
+    print("Enemy missile launch at start")
+    enemy_missile_launches.append(0)
+
+label = feature_labels.index("missile relative distance")
 for i in range(1, len(data_matrix)):
-    label = feature_labels.index("missile relative distance")
     if data_matrix[i - 1][label] == 0 and data_matrix[i][label] != 0:
         print("Enemy missile launch at ", steps_to_minsec(i, step_size))
+        enemy_missile_launches.append(i)
     if data_matrix[i - 1][label] != 0 and data_matrix[i][label] == 0:
         print("Enemy missile detonation at ", steps_to_minsec(i, step_size))
+        enemy_missile_detonations.append(i)
+if data_matrix[len(data_matrix) - 1][label] != 0:
+    print("Enemy missile detonation at ", steps_to_minsec(i, step_size))
+    enemy_missile_detonations.append(i)
 
 for i in range(1, len(enm_data_rows)):
-    label = feature_labels.index("missile relative distance")
     if enm_data_rows[i - 1][label] == 0 and enm_data_rows[i][label] != 0:
         print("Self missile launch at ", steps_to_minsec(i, step_size))
+        friendly_missile_launches.append(i)
     if enm_data_rows[i - 1][label] != 0 and enm_data_rows[i][label] == 0:
         print("Self missile detonation at ", steps_to_minsec(i, step_size))
-#Plot Label for Top-IG Features
+        friendly_missile_detonations.append(i)
+if enm_data_rows[len(data_matrix) - 1][label] != 0:
+    print("Enemy missile detonation at ", steps_to_minsec(i, step_size))
+    friendly_missile_detonations.append(i)
+    
+
+# Plot cluster assignments over time
+fig, ax = plt.subplots(figsize=(12, 3))
+ax.plot(cluster_labels, drawstyle='steps-post')
+for step in enemy_missile_launches:
+    ax.axvline(x=step, color='b', linestyle='--')
+for step in enemy_missile_detonations:
+    ax.axvline(x=step, color='b', linestyle='solid')
+for step in friendly_missile_launches:
+    ax.axvline(x=step, color='r', linestyle='--')
+for step in friendly_missile_detonations:
+    ax.axvline(x=step, color='r', linestyle='solid')
+
+
+ax.set_xlabel('Timestep')
+ax.set_ylabel('Behavioral Stage (Cluster)')
+ax.set_title('HDBSCAN Behavioral Stages Over Time')
+plt.show()
+plt.savefig("behavioral_stages_over_time.png")
+
+# Plot with minute:second x-axis labels
+fig, ax = plt.subplots(figsize=(14, 3))
+ax.plot(cluster_labels, label = 'Original', drawstyle='steps-post')
+ax.plot(smoothed_mode, label='Mode Filter', linewidth=2)
+ax.set_xlabel('Time (min:sec)')
+ax.set_ylabel('Behavioral Stage (Cluster)')
+ax.set_title('HDBSCAN Behavioral Stages Over Time (min:sec)')
+ax.legend()
+
+for step in enemy_missile_launches:
+    ax.axvline(x=step, color='b', linestyle='--')
+for step in enemy_missile_detonations:
+    ax.axvline(x=step, color='b', linestyle='solid')
+for step in friendly_missile_launches:
+    ax.axvline(x=step, color='r', linestyle='--')
+for step in friendly_missile_detonations:
+    ax.axvline(x=step, color='r', linestyle='solid')
+
+# Set x-ticks to every Nth label for readability
+N = max(1, total_steps // 15)
+ax.set_xticks(np.arange(0, total_steps, N), [time_labels[i] for i in range(0, total_steps, N)], rotation=45)
+
+fig.tight_layout()
+plt.show()
+plt.savefig("behavioral_stages_over_time_minsec.png")
+
+# Visualize clusters in PCA space
+plt.figure()
+plt.scatter(data_pca[:, 0], data_pca[:, 1], c=cluster_labels, cmap='tab10', s=10)
+plt.xlabel('PC1')
+plt.ylabel('PC2')
+plt.title('HDBSCAN Clusters in PCA Space')
+plt.colorbar(label='Cluster')
+plt.show()
+plt.savefig("clusters_in_pca_space.png")
