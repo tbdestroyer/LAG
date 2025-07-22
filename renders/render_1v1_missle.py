@@ -235,9 +235,6 @@ while True:
     print(f"step:{env.current_step}, bloods:{bloods} Attributions:{attributions} Delta:{delta}")
     enm_obs =  obs[num_agents // 2:, ...]
     ego_obs =  obs[:num_agents // 2, ...]
-    print(ego_obs)
-    print(ego_actions)
-    print(attr)
     data_rows.append(np.hstack((ego_obs[0], ego_actions[0], attr)))
     enm_data_rows.append(enm_obs[0])
     data_matrix = np.vstack(data_rows)
@@ -300,7 +297,7 @@ def mode_filter(sequence, window_size=5):
 
 smoothed_mode = mode_filter(cluster_labels, window_size=30)
 #50 was good
-
+'''
 # Output cluster information and relevant explainability
 for i, entry in enumerate(explanation_log):
     if i == 0 or entry["cluster"] != explanation_log[i-1]["cluster"]:
@@ -308,20 +305,19 @@ for i, entry in enumerate(explanation_log):
         print(f'Agent entered behavior stage {entry["cluster"]} at {entry["t"]:.1f}s '
               f'due to spikes in {", ".join(entry["top_IG_features"])}.')
     print(rationale(entry))
-
+'''
 cluster_times = get_cluster_times(explanation_log)
 top_integrated_gradients_in_cluster = get_most_frequent_integrated_gradients_in_cluster(explanation_log)
 #layout = [[sg.Text('', key='-WORD-', font=('Arial', 48), size=(15,1),justification='center')]]
 #window = sg.Window('Live Status',layout, finalize=True, keep_on_top=True, no_titlebar=True)  
 
 for cluster, times in cluster_times.items():
-    print(f'Cluster {cluster} is from {times[0]} to {times[1]}')
+    print(f'Cluster {cluster} begins at {sec_to_minsec(times[0])} and ends at {sec_to_minsec(times[1])}')
 
 for cluster in top_integrated_gradients_in_cluster:
     first = top_integrated_gradients_in_cluster[cluster]["first"]
     second = top_integrated_gradients_in_cluster[cluster]["second"]
     print(f'Cluster {cluster} has top features {first} (first) and {second} (second)')
-    print()
     if (first) == 'missile relative distance' and (second) == 'missile ego_AO' :
         print('Navigating...')
     if (first) == 'missile relative distance' and (second) == 'Z Velocity (mh)' :
@@ -330,7 +326,7 @@ for cluster in top_integrated_gradients_in_cluster:
         print('Positioning...')
     if (first) == 'ego_pitch_sin' and (second) =='delta_altitude (km)' :
         print('Attacking...')
-    
+    print()
 
 label = feature_labels.index("missile relative distance")
 
@@ -340,7 +336,7 @@ friendly_missile_launches = []
 friendly_missile_detonations = []
 
 if data_matrix[0][label] != 0:
-    print("Enemy missile launch at start")
+    print("Enemy missile launch at 0:00")
     enemy_missile_launches.append(0)
 
 label = feature_labels.index("missile relative distance")
